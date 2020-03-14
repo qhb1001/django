@@ -62,3 +62,9 @@ class DatetimeTests(SimpleTestCase):
         Pre-1000AD dates are padded with zeros if necessary
         """
         self.assertEqual(date(1, 1, 1).strftime("%Y/%m/%d was a %A"), '0001/01/01 was a Monday')
+
+    def test_combine(self):
+        self.assertEqual(datetime.combine(date(1, 1, 1), time(1, 1, 1, 1)), datetime(1, 1, 1, 1, 1, 1, 1))
+
+    def test_date(self):
+        self.assertEqual(datetime(1, 2, 3).date(), date(1, 2, 3))

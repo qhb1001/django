@@ -1,8 +1,10 @@
 import datetime
+from io import StringIO
 
 from django.test import SimpleTestCase
 from django.utils import feedgenerator
 from django.utils.timezone import get_fixed_timezone, utc
+from django.utils.xmlutils import SimplerXMLGenerator
 
 
 class FeedgeneratorTests(SimpleTestCase):
@@ -135,3 +137,106 @@ class FeedgeneratorTests(SimpleTestCase):
             with self.settings(USE_TZ=use_tz):
                 rss_feed = feedgenerator.Rss201rev2Feed('title', 'link', 'description')
                 self.assertEqual(rss_feed.latest_post_date().tzinfo, utc)
+
+    def test_rssfeed(self):
+        # initialization
+        feed = feedgenerator.RssFeed('title', '/link/', 'descr', language='language_test',
+                                     categories=['categories_test'], feed_copyright='feed_copyright_test',
+                                     ttl='ttl_test')
+        feed._version = 'v2.0'
+        feed.add_item('title', 'link', 'desc', language='English')
+
+        # get the content
+        feed_content = feed.writeString('utf-8')
+
+        # check the content
+        self.assertIn('language_test', feed_content)
+        self.assertIn('categories_test', feed_content)
+        self.assertIn('feed_copyright_test', feed_content)
+        self.assertIn('ttl_test', feed_content)
+
+    def test_rssuserland091feed_writestring(self):
+        # initialization
+        feed = feedgenerator.RssUserland091Feed('titile', '/link/', 'descr_test')
+        feed._version = 'v2.0'
+
+        # create handler
+        s = StringIO()
+        handler = SimplerXMLGenerator(s, 'utf-8')
+        handler.startDocument()
+
+        # add item
+        feed.add_item_elements(handler,
+                               item={'title': 'title_test', 'link': 'link_test', 'description': 'description'})
+
+        # get the content
+        feed_content = s.getvalue()
+
+        # check the content
+        self.assertIn('title_test', feed_content)
+        self.assertIn('link_test', feed_content)
+        self.assertIn('description', feed_content)
+
+    def test_Rss201rev2Feed(self):
+        # initialization
+        feed = feedgenerator.Rss201rev2Feed('titile', '/link/', 'descr_test')
+        feed._version = 'v2.0'
+
+        # create handler
+        s = StringIO()
+        handler = SimplerXMLGenerator(s, 'utf-8')
+        handler.startDocument()
+
+        # add item
+        feed.add_item_elements(handler, item={'title': 'title_test', 'link': 'link_test',
+                                              'description': 'description_test',
+                                              'author_name': 'qinhongbo', 'author_email': 'hongbo.qin.1001@gmail.com',
+                                              'pubdate': datetime.datetime(2015, 10, 1), 'comments': 'comments_test',
+                                              'unique_id': 'unique_id_test', 'ttl': 'ttl_test',
+                                              'enclosures': [
+                                                  feedgenerator.Enclosure('url_test', '100', 'mime_type_test')],
+                                              'categories': ['categories_test']})
+
+        # get the content
+        feed_content = s.getvalue()
+
+        # check the content
+        self.assertIn('title_test', feed_content)
+        self.assertIn('link_test', feed_content)
+        self.assertIn('description_test', feed_content)
+        self.assertIn('qinhongbo', feed_content)
+        self.assertIn('hongbo.qin.1001@gmail.com', feed_content)
+        self.assertIn('comments_test', feed_content)
+        self.assertIn('unique_id_test', feed_content)
+        self.assertIn('ttl_test', feed_content)
+        self.assertIn('categories_test', feed_content)
+
+    def test_Atom1Feed(self):
+        # initialization
+        feed = feedgenerator.Atom1Feed('titile', '/link/', 'descr_test', subtitle='subtitle_test',
+                                       feed_url="feed_url_test", language='English',
+                                       feed_copyright='feed_copyright_test', author_email='test@email',
+                                       author_name='qhb', author_link='author_link_test', categories=['categories_test'])
+        feed._version = 'v2.0'
+        feed.add_item('titile', '/link/', 'descr_test', language='English', feed_url='feed_url_test',
+                      subtitle='subtitle_test',
+                      categories=['categories_test'], feed_copyright='feed_copyright_test',
+                      pubdate=datetime.datetime(2015, 10, 1),
+                      updateddate=datetime.datetime(2015, 10, 2),
+                      author_name='qhb', author_link='link_test', author_email='email_test',
+                      unique_id='unique_id_test',
+                      enclosure=[feedgenerator.Enclosure('url_test', '100', 'type_test')],
+                      item_copyright='item_copyright_test')
+
+        # get the content
+        feed_content = feed.writeString('utf-8')
+
+        # check the content
+        self.assertIn('feed_url_test', feed_content)
+        self.assertIn('subtitle_test', feed_content)
+        self.assertIn('English', feed_content)
+        self.assertIn('qhb', feed_content)
+        self.assertIn('test@email', feed_content)
+        self.assertIn('feed_copyright_test', feed_content)
+        self.assertIn('author_link_test', feed_content)
+        self.assertIn('categories_test', feed_content)

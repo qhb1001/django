@@ -3,7 +3,7 @@ from datetime import date, datetime
 from django.test import SimpleTestCase, override_settings
 from django.test.utils import TZ_SUPPORT, requires_tz_support
 from django.utils import dateformat, translation
-from django.utils.dateformat import format
+from django.utils.dateformat import format, TimeFormat
 from django.utils.timezone import (
     get_default_timezone, get_fixed_timezone, make_aware, utc,
 )
@@ -37,6 +37,58 @@ class DateFormatTests(SimpleTestCase):
         self.assertEqual(format(dt, 'O'), '')
         self.assertEqual(format(dt, 'T'), '')
         self.assertEqual(format(dt, 'Z'), '')
+
+    def test_timeFormat_timezone(self):
+        dt = datetime(2015, 10, 25, 2, 30, 0)
+        tf = TimeFormat(dt)
+        tf.timezone = None
+
+        # Try all formatters that involve self.timezone.
+        self.assertEqual(tf.format('e'), '')
+        self.assertEqual(tf.format('O'), '')
+        self.assertEqual(tf.format('T'), '')
+        self.assertEqual(tf.format('Z'), '')
+
+    def test_TimeFormat_display(self):
+        dt1 = datetime(2015, 10, 25, 2, 30, 15)
+        dt2 = datetime(2015, 10, 25, 0, 30, 15)
+        tf1 = TimeFormat(dt1)
+        tf2 = TimeFormat(dt2)
+
+        self.assertEqual(tf1.format('f'), '2:30')
+        self.assertEqual(tf1.format('a'), 'a.m.')
+        self.assertEqual(tf1.format('A'), 'AM')
+        self.assertEqual(tf2.format('g'), '12')
+        self.assertEqual(tf1.format('g'), '2')
+        self.assertEqual(tf1.format('G'), '2')
+        self.assertEqual(tf1.format('h'), '02')
+        self.assertEqual(tf1.format('H'), '02')
+        self.assertEqual(tf1.format('i'), '30')
+
+    def test_DataFormat_display(self):
+        dt = datetime(2015, 10, 1, 2, 30, 15)
+        self.assertEqual(format(dt, 'D'), 'Thu')
+        self.assertEqual(format(dt, 'E'), 'October')
+        self.assertEqual(format(dt, 'o'), '2015')
+        self.assertEqual(format(dt, 'r'), 'Thu, 01 Oct 2015 02:30:15 +0200')
+
+    def test_datetime_rank(self):
+        dt1 = datetime(2015, 10, 1)
+        dt2 = datetime(2015, 10, 2)
+        dt3 = datetime(2015, 10, 3)
+        dt4 = datetime(2015, 10, 11)
+
+        self.assertEqual(format(dt1, 'S'), 'st')
+        self.assertEqual(format(dt2, 'S'), 'nd')
+        self.assertEqual(format(dt3, 'S'), 'rd')
+        self.assertEqual(format(dt4, 'S'), 'th')
+
+    def test_time_period(self):
+        midnight = datetime(2015, 10, 1, 0, 0)
+        noon = datetime(2015, 10, 1, 12, 0)
+        self.assertEqual(format(midnight, 'P'), 'midnight')
+        self.assertEqual(format(noon, 'P'), 'noon')
+
 
     @requires_tz_support
     def test_datetime_with_local_tzinfo(self):

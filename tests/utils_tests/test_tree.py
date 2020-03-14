@@ -86,3 +86,14 @@ class NodeTests(unittest.TestCase):
         node = Node(negated=False)
         negated = Node(negated=True)
         self.assertNotEqual(negated, node)
+
+    def test_add2(self):
+        # self.node1_children = [('a', 1), ('b', 2)]
+        node = Node(self.node1_children, connector="DEFAULT")
+        # test data in children
+        self.assertEqual(node.add(('a', 1), "DEFAULT"), ('a', 1))
+        # test squash=False
+        self.assertEqual(node.add(('c', 3), "DEFAULT", squash=False), ('c', 3))
+        # another connector
+        self.assertEqual(node.add(('d', 4), conn_type="NEW"), ('d', 4))
+

@@ -28,6 +28,33 @@ class OrderedSetTests(SimpleTestCase):
         s.add(2)
         self.assertEqual(len(s), 2)
 
+    def test_del(self):
+        # initialization
+        s = OrderedSet()
+        for i in range(3):
+            s.add(i)
+
+        # try to remove the existing key
+        s.remove(1)
+        self.assertEqual(s.dict, {0: None, 2: None})
+
+        # try to remove the non-existing value
+        s.discard(5)
+        self.assertEqual(s.dict, {0: None, 2: None})
+
+    def test_contains(self):
+        # initialization
+        s = OrderedSet()
+        for i in range(3):
+            s.add(i)
+
+        # test
+        for i in range(5):
+            if i < 3:
+                self.assertEqual(i in s, True)
+            else:
+                self.assertEqual(i in s, False)
+
 
 class MultiValueDictTests(SimpleTestCase):
 
@@ -80,6 +107,16 @@ class MultiValueDictTests(SimpleTestCase):
             self.assertEqual(d1["key"], ["Penguin"])
             self.assertEqual(d2["key"], ["Penguin"])
 
+    def test_deepcopy(self):
+        # initialization
+        dic = {'a': [[1, 2], [3, 4]], 'b': [[5, 6], 'c']}
+        d1 = MultiValueDict(dic)
+
+        d2 = copy.deepcopy(d1)
+        d1['a'][0] = [5, 6]
+        self.assertEqual(d1['a'], [[5, 6], 4])
+        self.assertEqual(d2['a'], [3, 4])
+
     def test_dict_translation(self):
         mvd = MultiValueDict({
             'devs': ['Bob', 'Joe'],
@@ -114,6 +151,37 @@ class MultiValueDictTests(SimpleTestCase):
         x = MultiValueDict({'a': None, 'b': []})
         self.assertIsNone(x.getlist('a'))
         self.assertEqual(x.getlist('b'), [])
+
+    def test_index(self):
+        # initialization
+        x = MultiValueDict({'a': [1], 'b': []})
+        # empty value
+        self.assertEqual(x['b'], [])
+        # get default value
+        self.assertEqual(x.get('b'), None)
+        # set item
+        x['c'] = ['a', 'b', 'c']
+        self.assertEqual(x['c'], ['a', 'b', 'c'])
+
+    def test_setdefault(self):
+        d = MultiValueDict({'a': [1]})
+        d.setdefault('b')
+        d.setdefault('a', [5, 6])
+        self.assertEqual(d['b'], None)
+        self.assertEqual(d['a'], 1)
+
+    def test_update(self):
+        d1 = MultiValueDict({'a': [1], 'b': [2]})
+        d2 = MultiValueDict({'c': [3]})
+        d2.update(d1)
+        d1['c'] = 3
+        self.assertEqual(d1, d2)
+        d2.update({'d': [4]})
+        self.assertEqual(d2['d'], [4])
+
+        # accepts only one parameter
+        with self.assertRaisesMessage(TypeError, "update expected at most 1 argument, got 2"):
+            d2.update(d1, 1)
 
 
 class ImmutableListTests(SimpleTestCase):
